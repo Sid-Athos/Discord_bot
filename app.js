@@ -6,7 +6,7 @@ var objet = {
     list : []
 }
 
-bot.login("NjQ4MjA5NDU3ODkzMDgxMTIz.Xdq6yw.pemG04IdjmFTvka-0-vOtxr8cHQ"); //Token (Série de chiffre) propre a chaque Bot
+bot.login("NjQ4MjA5NDU3ODkzMDgxMTIz.XfK5vg.iOcRqfhkbY2ijlZ5fQh3WqVzCDA"); //Token (Série de chiffre) propre a chaque Bot
 var prefix = "," ;
 
 bot.on('ready', function () {
@@ -151,7 +151,7 @@ if (message.content.startsWith(`${prefix}play`)) {
                 message.reply("Le bot est déjà occupé !");
                 return;
             } 
-            //message.member.voiceChannel.join();
+            message.member.voiceChannel.join();
         }
     }
     play();
