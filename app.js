@@ -3,7 +3,8 @@ const bot = new Discord.Client();
 const ytdl = require('ytdl-core');
 var objet = {
     channel : "",
-    list : []
+    list : [],
+    playlist : []
 }
 const fs = require('fs');
 var token = JSON.parse(fs.readFileSync("./token.json", 'utf-8'));
@@ -21,10 +22,10 @@ bot.on('message', message => {
 if (message.content.startsWith(`${prefix}purge`)) { // This time we have to use startsWith, since we will be adding a number to the end of the command.
         // We have to wrap this in an async since awaits only work in them.
         async function purge() {
-            if (!message.member.roles.find("name", "Golden Trio || ADMIN")) {
+            /*if (!message.member.roles.find("name", "Golden Trio || ADMIN")) {
                 message.channel.send("Vous n'avez pas le rôle approprié pour lancer cette commande.\nVous devez avoir le rôle 'Golden Trio || ADMIN' !");
                 return;
-            }
+            }*/
             message.delete();
             let args = message.content.split(" ");
             if(args[1]) {
@@ -156,6 +157,7 @@ if (message.content.startsWith(`${prefix}play`)) {
             }
 
             objet.list.push(args[1]);
+            objet.playlist.push(args[1]);
             
             if (message.member.voiceChannel.id != objet.channel){
                 message.reply("le bot est déjà occupé !");
@@ -185,5 +187,22 @@ if (message.content.startsWith(`${prefix}remove`)) {
             }
     }
     remove();
+}
+
+if (message.content.startsWith(`${prefix}list`)) {
+    async function list() {
+        message.channel.send(objet.list);
+    }
+    list();
+}
+
+if (message.content.startsWith(`${prefix}disconnect`)) {
+    async function disconnect() {
+        message.member.voiceChannel.leave(connection => {
+            message.member.voiceConnection.disconnect();
+            objet = {} ;
+        });
+    }
+    disconnect();
 }
 });
