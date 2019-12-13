@@ -5,9 +5,11 @@ var objet = {
     channel : "",
     list : []
 }
+const fs = require('fs');
+var token = JSON.parse(fs.readFileSync("./token.json", 'utf-8'));
 
-bot.login("NjQ4MjA5NDU3ODkzMDgxMTIz.XfK5vg.iOcRqfhkbY2ijlZ5fQh3WqVzCDA"); //Token (Série de chiffre) propre a chaque Bot
-var prefix = "," ;
+bot.login(token.key);
+var prefix = token.prefix ;
 
 bot.on('ready', function () {
     bot.user.setActivity(",help en cas de soucis")
@@ -118,7 +120,7 @@ if ((message.content === "omelette")) {
 }
 
 if (message.content.startsWith(`${prefix}help`)) {
-    message.channel.send("```Voici les commandes que je comprend :\n\t ,roll = lancé de dés\n\t ,weather = météo\n\t ,help = aide commande\n\t ,play = jouer de la musique```");
+    message.channel.send("```Voici les commandes que je comprend :\n\t ,roll = lancé de dés\n\t ,weather = météo\n\t ,help = aide commande\n\t ,play = jouer de la musique\n\t ,remove = supprimer une musique```");
 }
 
 if ((message.content === "Bonjour") || (message.content === "Heya") || (message.content === "Salut")) {
@@ -127,16 +129,24 @@ if ((message.content === "Bonjour") || (message.content === "Heya") || (message.
     message.channel.send("```Bonne nuit tout le monde !```")
 }
 
+if (message.content.startsWith(`${prefix}name`)) {
+    async function name() {
+        message.channel.send("```Salut ! Je m'appelle Nazeo et je gère beaucoup de choses ici. Si vous voulez savoir ce que je fais, utlisez la commande ',help'.```");
+        message.react(":slight_smile:");
+    }
+    name();
+}
+
 if (message.content.startsWith(`${prefix}play`)) {
     async function play() {
         let args = message.content.split(" ");
         console.log(args);
         if(args.length === 1) {
-            message.channel.send("Vous n'avez pas saisi d'arguments.\nLa commande fonctionne comme ça : ,play nom_musique.");
+            message.channel.send("```Vous n'avez pas saisi d'arguments.\nLa commande fonctionne comme ça : ,play nom_musique.```");
             return;
         }else{
             if(!message.member.voiceChannel) {
-                message.reply("Mets toi dans un channel vocal !");
+                message.reply("mets toi dans un channel vocal !");
                 return;
             } 
 
@@ -148,7 +158,7 @@ if (message.content.startsWith(`${prefix}play`)) {
             objet.list.push(args[1]);
             
             if (message.member.voiceChannel.id != objet.channel){
-                message.reply("Le bot est déjà occupé !");
+                message.reply("le bot est déjà occupé !");
                 return;
             } 
             message.member.voiceChannel.join();
@@ -163,14 +173,14 @@ if (message.content.startsWith(`${prefix}remove`)) {
         console.log(args);
         console.log(objet);
             if(args.length === 1) {
-                message.channel.send("Vous n'avez pas saisi d'arguments.\nLa commande fonctionne comme ça : ,remove id_musique.");
+                message.channel.send("```Vous n'avez pas saisi d'arguments.\nLa commande fonctionne comme ça : ,remove id_musique.```");
                 return;
             }
             if(objet.list.length >= Number(args[1])){
                 objet.list.splice(Number(args[1])-1,1);
-                message.channel.send("Musique supprimée");
+                message.channel.send("```Musique supprimée```");
             }else{
-                message.channel.send("Playlist inexistante");
+                message.channel.send("```Playlist inexistante```");
                 return;
             }
     }
