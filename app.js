@@ -1,6 +1,8 @@
 const Discord = require('discord.js');
 const bot = new Discord.Client();
 const ytdl = require('ytdl-core');
+const youtube = require('youtube-search');
+const streamOptions = { seek: 0, volume: 0.25 };
 var objet = {
     channel : "",
     list : [],
@@ -57,7 +59,7 @@ if (message.content.startsWith(`${prefix}roll`)) {
         message.channel.send("```Vous avez fait un " + result + " !```");
         // on fait un modulo pour savoir si le nombre est impair ou non
         if(result === 1 || result === 4){
-            message.member.addRole(message.guild.roles.find(role => role.name === "Coalition d\'Alya"));
+            message.member.addRole(message.guild.roles.find(role => role.id === "646112365879885874"));
             message.channel.send("```Vous êtes dans la Coalition d'Alya```");
         }else if(result === 2 || result === 6){
             message.member.addRole(message.guild.roles.find(role => role.name === "Coalition de Becca"));
@@ -67,9 +69,10 @@ if (message.content.startsWith(`${prefix}roll`)) {
             message.channel.send("```Vous êtes en Terre Neutre```");
         }
     }
-    if (message.member.roles.find(role => role.name === "Coalition de Becca" || role.name === "Coalition d\'Alya" || role.name === "Terre Neutre") !== null) {
+    if (message.member.roles.find(role => role.name === "Coalition de Becca" || role.id === "646112365879885874" || role.name === "Terre Neutre") !== null) {
         message.member.send("```Vous avez déjà une Coalition```");
         console.log("Vous avez déjà une Coalition");
+        console.log(message.member.roles.find(role => role.name === "Coalition de Becca" || role.id === "646112365879885874" || role.name === "Terre Neutre") !== null);
     } else {
         dice() ;
     }
@@ -121,7 +124,15 @@ if ((message.content === "omelette")) {
 }
 
 if (message.content.startsWith(`${prefix}help`)) {
-    message.channel.send("```Voici les commandes que je comprend :\n\t ,roll = lancé de dés\n\t ,weather = météo\n\t ,help = aide commande\n\t ,play = jouer de la musique\n\t ,remove = supprimer une musique```");
+    message.channel.send("```Voici les commandes que je comprend :"+
+    "\n_________________________________________________________________________________"+
+    "\nCommandes Rôle Play :"+
+    "\n\t ,roll = lancé de dés"+
+    "\n\t ,weather = météo"+
+    "\n_________________________________________________________________________________"+
+    "Commandes Générales :"+
+    "\n\t ,help = aide commande"+
+    "\n\t ,play = jouer de la musique\n\t ,remove = supprimer une musique\n\t ,list = affiche playlist en cours\n\t ,name = affiche mon nom```");
 }
 
 if ((message.content === "Bonjour") || (message.content === "Heya") || (message.content === "Salut")) {
@@ -163,9 +174,24 @@ if (message.content.startsWith(`${prefix}play`)) {
                 message.reply("le bot est déjà occupé !");
                 return;
             } 
-            message.member.voiceChannel.join();
+            message.member.voiceChannel.join().then(async connection => {
+                let url = await searchYouTubeAsync(args);
+                let stream = ytdl(url, { filter: 'audioonly' });
+                let dispatcher = connection.playStream(stream);
+              
+                dispatcher.on('end', () => voiceChannel.leave());
+                isReady = true;
+            })
         }
     }
+
+    async function searchYouTubeAsync(args) {
+        var video = await ytdl.searchVideos.playStream(args[1], streamOptions);
+        console.log(video.url);
+        console.log(typeof String(video.url));
+        return String(video.url);
+      }
+
     play();
 }
 
