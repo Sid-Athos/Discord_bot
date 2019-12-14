@@ -1,8 +1,8 @@
 const Discord = require('discord.js');
 const bot = new Discord.Client();
 const ytdl = require('ytdl-core');
-const youtube = require('youtube-search');
-const streamOptions = { seek: 0, volume: 0.25 };
+const search = require('youtube-search');
+//const streamOptions = { seek: 0, volume: 0.25 };
 var objet = {
     channel : "",
     list : [],
@@ -12,14 +12,38 @@ const fs = require('fs');
 var token = JSON.parse(fs.readFileSync("./token.json", 'utf-8'));
 
 bot.login(token.key);
-var prefix = token.prefix ;
+var prefix = token.prefix;
+
+async function play(co, url, msg) {
+    objet.dispatcher = co.playStream(ytdl(url,
+        { filter: "audioonly", quality: "highestaudio", liveBuffer: 40000 }));
+    objet.dispatcher.on("end", function () {
+        objet.list.splice(0, 1);
+        objet.playlist.splice(0, 1);
+        if (objet.list[0]) {
+
+            if (objet.list.length > 0) {
+                let e = new Discord.RichEmbed();
+                e.addField("Now Playing", objet.playlist[0]);
+                msg.channel.send(e);
+                play(co, objet.list[0], msg);
+            }
+            else {
+                co.disconnect();
+            }
+        } else {
+            co.disconnect();
+        }
+
+    });
+}
 
 bot.on('ready', function () {
     bot.user.setActivity(",help en cas de soucis")
     console.log("Je suis connecté !")
 });
 
-bot.on('message', message => {
+bot.on('message',async message => {
 
 if (message.content.startsWith(`${prefix}purge`)) { // This time we have to use startsWith, since we will be adding a number to the end of the command.
         // We have to wrap this in an async since awaits only work in them.
@@ -49,7 +73,7 @@ if (message.content.startsWith(`${prefix}purge`)) { // This time we have to use 
         // We want to make sure we call the function whenever the purge command is run.
         purge(); // Make sure this is inside the if(msg.startsWith)
 
-    }
+}
 
 if (message.content.startsWith(`${prefix}roll`)) {
     async function dice() {
@@ -150,56 +174,70 @@ if (message.content.startsWith(`${prefix}name`)) {
 }
 
 if (message.content.startsWith(`${prefix}play`)) {
-    async function play() {
-        let args = message.content.split(" ");
-        console.log(args);
-        if(args.length === 1) {
-            message.channel.send("```Vous n'avez pas saisi d'arguments.\nLa commande fonctionne comme ça : ,play nom_musique.```");
+    
+    let args = message.content.split(" ");
+    if (args.length === 1) {
+        message.channel.send("```Vous n'avez pas saisi d'arguments.\nLa commande fonctionne comme ça : ,play nom_musique.```");
+        return;
+    } else {
+        if (!message.member.voiceChannel) {
+            message.reply("mets toi dans un channel vocal !");
             return;
-        }else{
-            if(!message.member.voiceChannel) {
-                message.reply("mets toi dans un channel vocal !");
-                return;
-            } 
+        }
 
-            if(!objet.channel) {
-                objet.channel = message.member.voiceChannel.id;
-                objet.list = [];
+        if (!objet.channel) {
+            objet.channel = message.member.voiceChannel.id;
+            objet.list = [];
+        }
+        if(!args[1].startsWith("http"))
+        {
+            let options = {
+                maxResults: 1,
+                key: "AIzaSyAUyx_PLi5hpPY1fmN6MRRCw1tuN3IEdG4"
             }
+            let searchQuery = "";
+            for(let i = 1; i < args.length;i++)
+            {
+                searchQuery += args[i]+"+";
 
-            objet.list.push(args[1]);
-            objet.playlist.push(args[1]);
-            
-            if (message.member.voiceChannel.id != objet.channel){
-                message.reply("le bot est déjà occupé !");
-                return;
-            } 
-            message.member.voiceChannel.join().then(async connection => {
-                let url = await searchYouTubeAsync(args);
-                let stream = ytdl(url, { filter: 'audioonly' });
-                let dispatcher = connection.playStream(stream);
-              
-                dispatcher.on('end', () => voiceChannel.leave());
-                isReady = true;
-            })
+            }
+            var url = await search(searchQuery, options);
+            url = url.results[0].link;
+        } else {
+            var url = args[1];
+        }
+        objet.list.push(url);
+        let inf = await ytdl.getInfo(url);
+        
+        objet.playlist.push(inf.title);
+
+        if (message.member.voiceChannel.id != objet.channel) {
+            message.reply("le bot est déjà occupé !");
+            return;
+        }
+
+        if(!objet.dispatcher)
+        {
+            message.member.voiceChannel.join().then(function (connection) {
+                    play(connection, objet.list[0],message);
+                    console.log(objet.dispatcher);
+                });
         }
     }
+}
+if (message.content.startsWith(`${prefix}stop`)) {
+    objet.list = [];
+    objet.dispatcher.end();
+    delete objet.dispatcher;
+}
 
-    async function searchYouTubeAsync(args) {
-        var video = await ytdl.searchVideos.playStream(args[1], streamOptions);
-        console.log(video.url);
-        console.log(typeof String(video.url));
-        return String(video.url);
-      }
-
-    play();
+if (message.content.startsWith(`${prefix}skip`)) {
+    objet.dispatcher.end();
 }
 
 if (message.content.startsWith(`${prefix}remove`)) {
     async function remove() {
         let args = message.content.split(" ");
-        console.log(args);
-        console.log(objet);
             if(args.length === 1) {
                 message.channel.send("```Vous n'avez pas saisi d'arguments.\nLa commande fonctionne comme ça : ,remove id_musique.```");
                 return;
@@ -217,7 +255,7 @@ if (message.content.startsWith(`${prefix}remove`)) {
 
 if (message.content.startsWith(`${prefix}list`)) {
     async function list() {
-        message.channel.send(objet.list);
+        message.channel.send(objet.playlist);
     }
     list();
 }
